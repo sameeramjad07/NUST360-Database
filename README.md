@@ -24,7 +24,7 @@ The project's central focus is on providing a centralized platform for students,
 
 8. **Future Scalability:** Design the system with future enhancements in mind, allowing for seamless integration of new features and functionalities.
 
-# Schema Walkthrough
+## 1. **Schema Walkthrough:**
 
 ### 1. User Table
 - **Primary Key:** `uuid` (Auto-incremented User ID)
@@ -135,8 +135,10 @@ The project's central focus is on providing a centralized platform for students,
   - `action`: Log action
   - `timeStamp`: Timestamp of the log entry
 
+## 2. **Business Rules:**
 
-### 5. **Sample Queries:**
+
+## 3. **Sample Queries:**
 
 **Below are some sample queries for your database schema. These queries cover various operations such as retrieving information, filtering data, and aggregating results.**
 
@@ -234,17 +236,17 @@ The project's central focus is on providing a centralized platform for students,
    ORDER BY I.invDueDate DESC;
    ```
 
-### 6. **Triggers:**
+## 4. **Triggers:**
 
-#### 1. **set_username_trigger:**
+#### 1. `set_username_trigger`:
    - **Purpose:** Automatically generates a username for a new user if not provided.
    - **Explanation:** This trigger fires before inserting a new record into the `User` table. If the `Username` field is NULL or empty, it concatenates the lowercase first name, last name, and UUID to create a unique username.
 
-#### 2. **set_due_date_trigger:**
+#### 2. `set_due_date_trigger`:
    - **Purpose:** Sets the due date of an invoice 7 days in advance based on the issue date.
    - **Explanation:** This trigger is executed before inserting a new record into the `Invoice` table. It calculates the due date by adding 7 days to the issue date and sets it for the new record.
 
-#### 3. **update_inprogress_details_trigger:**
+#### 3. `update_inprogress_details_trigger`:
    - **Purpose:** Updates in-progress credit hours and courses in the `Student` table when a new enrollment occurs.
    - **Explanation:** Triggered after inserting a new record into the `enrols` table. It updates the `inprogress_courses` and `inprogress_credits` fields in the `Student` table for the student (CMS) associated with the new enrollment. It counts the distinct courses and calculates the sum of credit hours for that student.
 
@@ -252,61 +254,223 @@ These triggers contribute to maintaining data consistency and automate the popul
 
 Ensure that these triggers are tested thoroughly under different scenarios to confirm their reliability and correctness in various use cases. Also, consider adding error handling or logging mechanisms within triggers to capture unexpected scenarios and facilitate debugging if needed.
 
-### 7. **Stored Procedures:**
+## 5. **Stored Procedures:**
 Below is an overview and explanation of each stored procedure:
 
-#### 1. **updateAttendanceInEnrols:**
+#### 1. `updateAttendanceInEnrols()`:
    - **Purpose:** Updates the `attendancePercentAge` in the `enrols` table based on attendance records.
    - **Explanation:** This procedure uses an UPDATE statement with a JOIN on a subquery that calculates attendance percentages for each student in each course. It then sets the calculated percentage in the `enrols` table.
 
-#### 2. **updateclassAverageInResults:**
+#### 2. `updateclassAverageInResults()`:
    - **Purpose:** Updates the `class_avg` in the `Result` table based on exam results.
    - **Explanation:** Similar to the first procedure, this one updates the `class_avg` in the `Result` table by joining with a subquery that calculates the average marks for each course and exam type.
 
-#### 3. **CalculateGradesForAllStudents:**
+#### 3. `CalculateGradesForAllStudents()`:
    - **Purpose:** Calculates grades for all students based on final exam marks and updates the `enrols` table.
    - **Explanation:** This procedure uses a cursor to iterate over distinct combinations of CMS and CID in the `Result` table. It calculates grades based on final exam marks and updates the `enrols` table accordingly.
 
-#### 4. **CalculateAndUpdateCGPA:**
+#### 4. `CalculateAndUpdateCGPA()`:
    - **Purpose:** Calculates and updates the CGPA for each student.
    - **Explanation:** This procedure iterates over distinct CMS values in the `enrols` table, calculating CGPA by summing CGPA points and dividing by total credit hours. It then updates the `Student` table with the calculated CGPA.
 
-#### 5. **InsertUserWithEncryptedPassword:**
+#### 5. `InsertUserWithEncryptedPassword()`:
    - **Purpose:** Inserts a new user with an encrypted password.
    - **Explanation:** This procedure encrypts the provided password using AES_ENCRYPT and inserts a new user into the `User` table with the encrypted password.
 
-#### 6. **GetUserPassword:**
+#### 6. `GetUserPassword()`:
    - **Purpose:** Retrieves the decrypted password for a given user.
    - **Explanation:** This procedure retrieves the encrypted password from the `User` table, decrypts it using AES_DECRYPT, and returns the result.
 
-### 8. **Calculated Fields:**
+## 6. **Calculated Fields:**
    - Clearly define fields that are calculated and explain the logic behind their calculations.
 
-### 11. **Data Population Scripts:**
+## 7. **Data Population Scripts:**
    - Some Sample data is provided in the `data.sql` file
 
-### 12. **Views:**
-   - Document any views created for specific reporting or querying purposes.
+## 8. **Views:**
+   - Below are some examples of views that could be used when you want to add abstraction in your project:
 
-### 13. **Constraints:**
+#### 1. **StudentView:**
+   - **Purpose:** Provide a view for students with relevant information about their courses, grades, and invoices.
+
+```sql
+CREATE VIEW StudentView AS
+SELECT
+    S.cms,
+    S.fname,
+    S.lname,
+    C.cname AS course_name,
+    E.grade,
+    E.attendancePercentAge,
+    I.invName,
+    I.amount,
+    I.invDueDate
+FROM
+    Student S
+JOIN enrols E ON S.cms = E.cms
+JOIN Course C ON E.cid = C.cid
+LEFT JOIN Invoice I ON S.cms = I.cms;
+```
+
+#### 2. **FacultyView:**
+   - **Purpose:** Provide a view for faculty members with information about courses they teach and student grades.
+
+```sql
+CREATE VIEW FacultyView AS
+SELECT
+    F.emp_id,
+    F.fname,
+    F.lname,
+    C.cname AS course_name,
+    E.grade,
+    E.attendancePercentAge
+FROM
+    Faculty F
+JOIN teaches T ON F.emp_id = T.emp_id
+JOIN Course C ON T.cid = C.cid
+JOIN enrols E ON T.cid = E.cid;
+```
+
+#### 3. **AdminView:**
+   - **Purpose:** Provide a view for administrators with information about all users, courses, and system logs.
+
+```sql
+CREATE VIEW AdminView AS
+SELECT
+    U.uuid,
+    U.fname,
+    U.lname,
+    U.`role`,
+    D.dept_name,
+    C.cname AS course_name,
+    L.action,
+    L.timeStamp
+FROM
+    User U
+LEFT JOIN Student S ON U.uuid = S.uuid
+LEFT JOIN Faculty F ON U.uuid = F.uuid
+LEFT JOIN Admin A ON U.uuid = A.uuid
+LEFT JOIN Department D ON S.dept_id = D.dept_id OR F.dept_id = D.dept_id
+LEFT JOIN teaches T ON F.emp_id = T.emp_id
+LEFT JOIN Course C ON T.cid = C.cid
+LEFT JOIN Logs L ON U.uuid = L.uuid;
+```
+
+#### 4. **StudentCourseView:**
+   - **Purpose:** Provide a view for students with detailed information about their enrolled courses.
+
+```sql
+CREATE VIEW StudentCourseView AS
+SELECT
+    S.cms,
+    S.fname,
+    S.lname,
+    C.cname AS course_name,
+    E.grade,
+    E.attendancePercentAge,
+    R.total_marks,
+    R.marks_obtained,
+    R.class_avg
+FROM
+    Student S
+JOIN enrols E ON S.cms = E.cms
+JOIN Course C ON E.cid = C.cid
+LEFT JOIN Result R ON S.cms = R.cms AND E.cid = R.cid;
+```
+
+
+## 9. **Constraints:**
    - List and explain any constraints applied to ensure data integrity.
 
-### 16. **Backup and Recovery Procedures:**
-   - Outline the procedures for database backup and recovery.
+## 10. **Backup and Recovery Procedures:**
+   - Below is the  `.bat` file code to create a backup and recovery feature along with explanations for the changes you need to make according to your machine and database:
 
-### 18. **Future Development Plans:**
+```batch
+@echo off
+
+rem Set the path to the MySQL server bin folder
+cd "C:\Program Files\MySQL\MySQL Server 8.0\bin"
+
+rem Set the credentials to connect to the MySQL server
+set mysql_user=your_username
+set mysql_password=your_password
+
+rem Set the backup folder path
+set backup_path=F:\New Folder\MySQL Backup
+
+rem Set the backup name with a timestamp
+set timestamp=%date:~-4%_%date:~3,2%_%date:~0,2%_%time:~0,2%_%time:~3,2%_%time:~6,2%
+set backup_name=my-all-databases_%timestamp%
+
+rem Set the MySQL dump command
+set mysqldump_command=mysqldump --user=%mysql_user% --password=%mysql_password% --all-databases --routines --events --result-file="%backup_path%\%backup_name%.sql"
+
+rem Backup creation
+%mysqldump_command%
+if %ERRORLEVEL% neq 0 (
+    (echo Backup failed: error during dump creation) >> "%backup_path%\mysql_backup_log.txt"
+) else (echo Backup successful) >> "%backup_path%\mysql_backup_log.txt"
+
+pause
+```
+
+Explanation of Changes you need to make while creating the `.bat` file:
+1. **Set Your MySQL Credentials:**
+   - Modify the `mysql_user` and `mysql_password` variables with your MySQL username and password.
+
+2. **Set Backup Folder Path:**
+   - Modify the `backup_path` variable to the desired path where you want to store your backups.
+
+3. **Timestamp Backup Name:**
+   - Added a timestamp to the `backup_name` variable to make each backup file unique. This ensures that each backup has a distinct name.
+
+4. **MySQL Dump Command:**
+   - Created a variable `mysqldump_command` to store the MySQL dump command. This makes it easier to modify the command if needed.
+
+5. **Backup Creation:**
+   - Used the `%mysqldump_command%` variable to execute the MySQL dump command.
+   - Checked the `%ERRORLEVEL%` after the backup creation and logged the result in the `mysql_backup_log.txt` file.
+
+### Procedure for Scheduled Backups using Task Scheduler:
+
+1. **Create a Batch File:**
+   - Save the modified bat file code into a `.bat` file, e.g., `backup_script.bat`.
+
+2. **Open Task Scheduler:**
+   - Open the Windows Task Scheduler.
+
+3. **Create a New Task:**
+   - Click on "Create Basic Task" or "Create Task" in the Actions pane.
+
+4. **Set Task Details:**
+   - Provide a name and description for your task.
+   - Choose the trigger type (daily, weekly, or monthly) and set the appropriate settings.
+
+5. **Set Action:**
+   - Choose "Start a Program" as the action.
+   - Browse and select the `backup_script.bat` file.
+
+6. **Configure Conditions (Optional):**
+   - Set any additional conditions as per your requirements.
+
+7. **Review and Finish:**
+   - Review your settings and click "Finish" to create the task.
+
+By following these steps, the Task Scheduler will execute your backup script at the specified intervals. Adjust the task settings or modify the script as needed. You can also create separate tasks for daily, weekly, or monthly backups.
+
+## 11. **Future Development Plans:**
    - Mention any planned enhancements or features for the database.
    - (working on it)
 
-### 20. **Acknowledgments:**
+## 12. **Acknowledgments:**
    - Give credit to contributors or sources of inspiration for your database design.
    - (working on it)
 
-### 21. **References:**
+## 13. **References:**
    - Include references to external resources, libraries, or frameworks used in the project.
    - (working on it)
 
-### 22. **Appendices:**
+## 14. **Appendices:**
    - Attach any supplementary materials, such as additional diagrams or detailed explanations.
    - (working on it)
 
