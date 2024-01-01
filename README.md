@@ -135,10 +135,62 @@ The project's central focus is on providing a centralized platform for students,
   - `action`: Log action
   - `timeStamp`: Timestamp of the log entry
 
-## 2. **Business Rules:**
 
 
-## 3. **Sample Queries:**
+## 2. **ER Diagram:**
+![nust360 ER](https://github.com/sameeramjad07/NUST360-Database/assets/113773736/3900fb19-36c6-4297-b5bc-0b0112d47cd8)
+
+
+## 3. **Business Rules:**
+
+1. **User Management:**
+   - Every user must have a unique `uuid` as their primary key.
+   - The `Username` for each user is automatically generated based on their first name (`fname`), last name (`lname`), and `uuid`.
+
+2. **Student Management:**
+   - Each student (`Student` table) must be associated with a user through the foreign key `uuid`.
+   - The `cgpa` of a student is calculated based on the records in the `Result` table.
+   - The `inprogress_courses` and `inprogress_credits` for a student are updated through the `enrols` table.
+
+3. **Faculty Management:**
+   - Each faculty member (`Faculty` table) must be associated with a user through the foreign key `uuid`.
+
+4. **Course Management:**
+   - Each course (`Course` table) must have a unique `cid` as its primary key.
+   - The credit hours of a course are specified in the `credit_hours` column.
+
+5. **Attendance Management:**
+   - Attendance records (`attendance` table) must be associated with both a student (`cms`) and a course (`cid`).
+   - The `status` column in the attendance table indicates whether a student is present or absent.
+
+6. **Enrollment Management:**
+   - Enrollment records (`enrols` table) must be associated with both a student (`cms`) and a course (`cid`).
+   - The `grade` column in the `enrols` table is calculated based on the `Result` table.
+
+7. **Teaching Assignment:**
+   - Faculty members (`Faculty` table) can teach multiple courses (`Course` table).
+   - Teaching assignments are recorded in the `teaches` table.
+
+8. **Exam Type Management:**
+   - Each type of exam (`examType` table) must have a unique `exam_type` as its primary key.
+   - The `weightage` column in the `examType` table indicates the weightage of that type of exam in the overall result.
+
+9. **Result Calculation:**
+   - The `Result` table captures the results of students in various exams (`examType`).
+   - The `class_avg` column in the `Result` table is calculated based on the records of each student for a specific course and exam type.
+
+10. **Invoice Management:**
+    - Invoices (`Invoice` table) are associated with students (`cms`) and contain information about issued and due dates.
+
+11. **Notification System:**
+    - Notifications (`Notifications` table) are sent between users (`senderID` and `receiverID` are foreign keys to `User`).
+    - The `isRead` column indicates whether a notification has been read.
+
+12. **Logging:**
+    - System actions and changes are logged in the `Logs` table, capturing details such as the user (`uuid`), role, action, and timestamp.
+
+
+## 4. **Sample Queries:**
 
 **Below are some sample queries for your database schema. These queries cover various operations such as retrieving information, filtering data, and aggregating results.**
 
@@ -236,7 +288,7 @@ The project's central focus is on providing a centralized platform for students,
    ORDER BY I.invDueDate DESC;
    ```
 
-## 4. **Triggers:**
+## 5. **Triggers:**
 
 #### 1. `set_username_trigger`:
    - **Purpose:** Automatically generates a username for a new user if not provided.
@@ -254,7 +306,7 @@ These triggers contribute to maintaining data consistency and automate the popul
 
 Ensure that these triggers are tested thoroughly under different scenarios to confirm their reliability and correctness in various use cases. Also, consider adding error handling or logging mechanisms within triggers to capture unexpected scenarios and facilitate debugging if needed.
 
-## 5. **Stored Procedures:**
+## 6. **Stored Procedures:**
 Below is an overview and explanation of each stored procedure:
 
 #### 1. `updateAttendanceInEnrols()`:
@@ -281,13 +333,13 @@ Below is an overview and explanation of each stored procedure:
    - **Purpose:** Retrieves the decrypted password for a given user.
    - **Explanation:** This procedure retrieves the encrypted password from the `User` table, decrypts it using AES_DECRYPT, and returns the result.
 
-## 6. **Calculated Fields:**
+## 7. **Calculated Fields:**
    - Clearly define fields that are calculated and explain the logic behind their calculations.
 
-## 7. **Data Population Scripts:**
+## 8. **Data Population Scripts:**
    - Some Sample data is provided in the `data.sql` file
 
-## 8. **Views:**
+## 9. **Views:**
    - Below are some examples of views that could be used when you want to add abstraction in your project:
 
 #### 1. **StudentView:**
@@ -379,10 +431,10 @@ LEFT JOIN Result R ON S.cms = R.cms AND E.cid = R.cid;
 ```
 
 
-## 9. **Constraints:**
+## 10. **Constraints:**
    - List and explain any constraints applied to ensure data integrity.
 
-## 10. **Backup and Recovery Procedures:**
+## 11. **Backup and Recovery Procedures:**
    - Below is the  `.bat` file code to create a backup and recovery feature along with explanations for the changes you need to make according to your machine and database:
 
 ```batch
@@ -458,19 +510,19 @@ Explanation of Changes you need to make while creating the `.bat` file:
 
 By following these steps, the Task Scheduler will execute your backup script at the specified intervals. Adjust the task settings or modify the script as needed. You can also create separate tasks for daily, weekly, or monthly backups.
 
-## 11. **Future Development Plans:**
+## 12. **Future Development Plans:**
    - Mention any planned enhancements or features for the database.
    - (working on it)
 
-## 12. **Acknowledgments:**
+## 13. **Acknowledgments:**
    - Give credit to contributors or sources of inspiration for your database design.
    - (working on it)
 
-## 13. **References:**
+## 14. **References:**
    - Include references to external resources, libraries, or frameworks used in the project.
    - (working on it)
 
-## 14. **Appendices:**
+## 15. **Appendices:**
    - Attach any supplementary materials, such as additional diagrams or detailed explanations.
    - (working on it)
 
